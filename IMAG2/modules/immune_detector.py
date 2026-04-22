@@ -92,9 +92,12 @@ class ImmuneDetector:
         h_b = self._svd_rank1(H_b)   # dominant benign direction
 
         # Step 3: Euclidean distance (Eq. 4)
-        # s_a = ‖h_a − h_lt(x)‖₂,  s_b = ‖h_b − h_lt(x)‖₂
-        s_a = float(np.linalg.norm(h_a - h_x))
-        s_b = float(np.linalg.norm(h_b - h_x))
+        # Normalize h_x to unit sphere so distances are on the same scale
+        # as h_a / h_b (both are already unit vectors from SVD).
+        # Without this, s_a ≈ s_b ≈ ‖h_x‖ >> gap, making T meaningless.
+        h_x_unit = self._normalize(h_x)
+        s_a = float(np.linalg.norm(h_a - h_x_unit))
+        s_b = float(np.linalg.norm(h_b - h_x_unit))
 
         # Step 4: Classification (Eq. 4)
         # ATTACK  if s_a − s_b < -T  (h_x closer to attack ref = smaller s_a)
