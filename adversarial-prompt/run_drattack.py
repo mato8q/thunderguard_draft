@@ -52,8 +52,8 @@ except ImportError:
     sys.exit(1)
 
 OLLAMA_BASE_URL   = "http://localhost:11434/v1"
-DECOMPOSER_MODEL  = "qwen3.5:9b"      # Local: matches GPT-4o-mini on MMLU-Pro/IFEval (Mar 2026)
-JUDGE_MODEL       = "qwen3.5:9b"      # Local: 89.2% IFEval at Q4 → reliable "Rating: [[N]]" format
+DECOMPOSER_MODEL  = "qwen3.5:9b"      # fallback: qwen2.5:7b if qwen3.5 not available in Ollama
+JUDGE_MODEL       = "qwen3.5:9b"      # fallback: qwen2.5:7b if qwen3.5 not available in Ollama
 EMBEDDING_MODEL   = "nomic-embed-text" # Local: efficient semantic embeddings
 N_PARTS           = 3       # sub-prompts per decomposition
 K_VARIANTS        = 5       # paper: topk_sub = 5

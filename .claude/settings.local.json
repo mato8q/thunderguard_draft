@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python --version)",
+      "PowerShell(pip --version)",
+      "PowerShell(python3 --version)",
+      "PowerShell(Get-Command conda -ErrorAction SilentlyContinue)",
+      "PowerShell(conda --version 2>$null)",
+      "PowerShell(py --version)",
+      "PowerShell(nvidia-smi 2>$null)",
+      "PowerShell(if \\(-not $?\\) { \"No nvidia-smi found\" })",
+      "PowerShell(winget --version)",
+      "PowerShell(& \"C:\\\\Program Files\\\\Python311\\\\python.exe\" --version)",
+      "PowerShell([System.Environment]::SetEnvironmentVariable\\(\"Path\", $env:Path + \";C:\\\\Program Files\\\\Python311;C:\\\\Program Files\\\\Python311\\\\Scripts\", [System.EnvironmentVariableTarget]::Machine\\))"
+    ]
+  }
+}
