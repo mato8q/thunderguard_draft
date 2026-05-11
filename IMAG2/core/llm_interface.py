@@ -9,7 +9,7 @@ Capabilities:
 
 import numpy as np
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class TargetLLM:
@@ -21,13 +21,9 @@ class TargetLLM:
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.float16,
-        )
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name_or_path,
-            quantization_config=bnb_config,
+            torch_dtype=torch.float16,
             device_map="auto",
             low_cpu_mem_usage=True,
         )

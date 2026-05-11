@@ -51,12 +51,24 @@ class ImmuneDetector:
         Apply SVD to matrix H ∈ ℝ^{k × d}, return rank-1 dominant direction.
         (Eq. 3): SVD(H) → keep only the first right-singular vector (row of V^T).
         This captures the primary characteristic direction of the activation set.
+
+        Sign fix: SVD singular vectors have arbitrary sign (±). We align the
+        dominant direction with the data mean so it always points toward the
+        cluster centroid rather than away from it.  Without this fix the
+        reference vector can be anti-correlated with every eval sample, causing
+        s_a >> s_b for attacks and inverting every classification decision.
         """
         # matrix shape: [k, hidden_dim]
         # np.linalg.svd returns U [k,k], S [min(k,d)], Vh [d,d]
         # First row of Vh is the dominant right-singular vector
         _, _, Vh = np.linalg.svd(matrix, full_matrices=False)
         dominant = Vh[0]  # shape [hidden_dim] — rank-1 direction
+
+        # Align sign with the data mean (standard PCA sign-fixing convention)
+        mean_dir = matrix.mean(0)
+        if np.dot(dominant, mean_dir) < 0:
+            dominant = -dominant
+
         return self._normalize(dominant)
 
     # ── Main ──────────────────────────────────────────────────────────────────
