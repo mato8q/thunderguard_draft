@@ -1,7 +1,14 @@
-# Adversarial Prompt Dataset
+# Adversarial Prompt Dataset and Local Runners
 
-Base64, Zulu, PAIR, and DrAttack attacks on 820 harmful prompts (AdvBench + HEx-PHI).
-**All models run fully local. Zero API cost.**
+This directory contains adversarial and benign prompt datasets plus local PAIR
+and DrAttack runners used by the parent ThunderGuard/IMAG evaluation workflow.
+The intended scope is controlled, authorized AI safety research against local
+Ollama models.
+
+Base64, Zulu, PAIR, and DrAttack cover 820 harmful prompts from AdvBench and
+HEx-PHI. Benign datasets are included for false-positive evaluation.
+All runner code is local-first and uses Ollama-compatible chat/embedding
+endpoints through lightweight Python clients.
 
 ## Attacks
 
@@ -17,10 +24,10 @@ Base64, Zulu, PAIR, and DrAttack attacks on 820 harmful prompts (AdvBench + HEx-
 ## Structure
 
 ```
-exports/
+adversarial-prompt/
 ├── README.md
-├── pyproject.toml              ← dependencies (uv)
-├── requirements.txt            ← dependencies (pip)
+├── pyproject.toml              ← uv/project metadata
+├── requirements.txt            ← pip dependencies
 ├── run_pair.py                 ← PAIR attack runner
 ├── run_drattack.py             ← DrAttack runner
 └── data/
@@ -66,7 +73,7 @@ Attacker LLM iteratively rewrites a jailbreak prompt using feedback from a judge
 
 **Setup:**
 ```bash
-pip install openai  # for OpenAI client abstraction (uses Ollama backend)
+pip install -r requirements.txt
 ollama pull qwen3.5:9b
 ollama pull mistral:7b
 ollama serve       # in another terminal
@@ -113,7 +120,7 @@ Decomposes the harmful prompt into 3 sub-prompts that each appear innocuous, the
 
 **Setup:**
 ```bash
-pip install openai requests  # for OpenAI client abstraction + Ollama embeddings API
+pip install -r requirements.txt
 ollama pull qwen3.5:9b
 ollama pull mistral:7b
 ollama pull nomic-embed-text
@@ -194,5 +201,4 @@ All runners are optimized for **RTX 4070 (12GB VRAM)**. Sequential execution (lo
 - Wei et al. 2023 — Base64 / Zulu (Jailbroken)
 - Chao et al. 2023 — PAIR ([Jailbreaking Black Box LLMs in Twenty Queries](https://arxiv.org/abs/2310.08419)) — paper used Vicuna-13B-v1.5 attacker + GPT-4 judge
 - Li et al. 2024 — DrAttack ([Prompt Decomposition and Reconstruction](https://arxiv.org/abs/2402.16914), EMNLP Findings) — paper used GPT-4 decomposer + text-embedding-ada-002 + GPT-3.5-turbo judge
-- Qwen Team 2026 — [Qwen 3.5 9B](https://qwen.ai/blog?id=qwen3.5) (open-weight, Apache 2.0, March 2026)
 - Nomic AI — nomic-embed-text (efficient local embeddings)

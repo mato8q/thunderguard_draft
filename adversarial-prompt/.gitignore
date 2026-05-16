@@ -1,6 +1,15 @@
-.venv/
+# Python bytecode and local environments
 __pycache__/
-*.pyc
+*.py[cod]
+.venv/
+venv/
 
-# PAIR output — generated, not source
-pair_results.csv
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Generated runner outputs
+data/transformed/pair_results_*.csv
+data/transformed/drattack_results_*.csv
+*.log

@@ -1,1 +1,3 @@
-openai
+# Local Ollama runner dependencies
+openai>=1.30.0
+requests>=2.31.0
