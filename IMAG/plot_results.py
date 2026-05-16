@@ -299,13 +299,11 @@ def classify_cached(
 
     detector = ImmuneDetector(threshold_T=threshold, top_k=TOP_K)
     results = []
-    gap_records = []   # (true_label, gap) for each sample — used for plots & multi-run
     t_start = time.time()
     total = len(attack_h) + len(benign_h)
 
     def _step(h_x, text, true_label, idx):
         label, s_a, s_b = detector.detect(h_x, memory.get_attack(), memory.get_benign())
-        gap = s_b - s_a
         is_candidate = (label == "CANDIDATE")
 
         if is_candidate:
@@ -330,8 +328,7 @@ def classify_cached(
                 memory._lt_benign.append(h_x)
 
         results.append((true_label, label))
-        gap_records.append((true_label, gap))
-        print(f"  [{idx:>3}/{total}] {true_label} → {label:<8}  gap={gap:+.4f}", end="\r")
+        print(f"  [{idx:>3}/{total}] {true_label} → {label:<8}  gap={s_b-s_a:+.4f}", end="\r")
 
     for i, (text, h_x) in enumerate(zip(attack_texts, attack_h), 1):
         _step(h_x, text, "ATTACK", i)
@@ -339,9 +336,7 @@ def classify_cached(
         _step(h_x, text, "BENIGN", len(attack_h) + i)
 
     print()
-    metrics = _compute_metrics(results, dataset, time.time() - t_start)
-    metrics["_gap_records"] = gap_records   # per-sample (true_label, gap) — stripped before CSV save
-    return metrics
+    return _compute_metrics(results, dataset, time.time() - t_start)
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -510,23 +505,11 @@ def save_results(rows: list[dict], model_name: str, datasets: list[str], thresho
 
     fieldnames = ["dataset", "total", "tp", "tn", "fp", "fn",
                   "acc", "precision", "recall", "f1", "fpr", "time_s", "s_per_sample"]
-
     with open(fname, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
-
-    # Save per-sample gaps for plotting (gap_distribution, ROC)
-    gaps_fname = fname.replace(".csv", "_gaps.csv")
-    with open(gaps_fname, "w", newline="", encoding="utf-8") as f:
-        gw = csv.writer(f)
-        gw.writerow(["dataset", "true_label", "gap"])
-        for r in rows:
-            for true_label, gap in r.get("_gap_records", []):
-                gw.writerow([r["dataset"], true_label, round(gap, 6)])
-
     print(f"\n  Results saved → {fname}")
-    print(f"  Gap data  saved → {gaps_fname}")
     return fname
 
 
