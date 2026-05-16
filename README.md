@@ -1,6 +1,10 @@
 # ThunderGuard
 
-ThunderGuard is a local LLM safety research workspace:
+ThunderGuard is a LLM safety research project inspired by the IMAG framework,
+with team contributions in forgetting mechanisms, embedding-based detection,
+and latency reduction.
+
+This workspace includes:
 
 - `docs/IMAG.md`: paper reference notes for IMAG: An Adaptive Jailbreak
   Detection Framework Inspired by Innate Immune Memory.
@@ -53,25 +57,3 @@ python evaluate.py --dataset all --threshold 0.1 --no-active-immunity
 
 Large model weights, generated memory banks, critical-layer caches, and new
 result files are treated as generated artifacts and ignored by default.
-
-## Adversarial Prompt Package
-
-The nested `adversarial-prompt/` directory is intentionally separate because it
-uses Ollama-compatible local chat and embedding endpoints instead of Hugging
-Face model loading.
-
-```bash
-cd adversarial-prompt
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-See `adversarial-prompt/README.md` for runner-specific setup and commands.
-
-## Dependency Scope
-
-Top-level dependencies are limited to packages imported by the IMAG code:
-`numpy`, `torch`, `transformers`, and `accelerate`. The adversarial prompt
-runners declare their own dependencies in `adversarial-prompt/requirements.txt`
-and `adversarial-prompt/pyproject.toml`.
