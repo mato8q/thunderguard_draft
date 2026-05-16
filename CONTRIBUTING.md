@@ -9,6 +9,7 @@ Keep Git simple, and do not work directly on `main`.
 3. ใช้ 1 branch ต่อ 1 งาน
 4. เปิด pull request ก่อน merge
 5. ใช้ squash merge
+6. Commit บ่อย ๆ 
 
 Branch names should be short:
 
@@ -36,6 +37,10 @@ git checkout -b your-name/short-topic
 git add path/to/file.py
 git commit -m "area: short description"
 
+# ทำซ้ำเป็นระยะ อย่ารอจนงานก้อนใหญ่จบค่อย commit
+git add another/file.py
+git commit -m "area: next small change"
+
 # ดึง main ล่าสุดมารวมก่อนเปิด PR
 git fetch origin
 git merge origin/main
@@ -51,6 +56,8 @@ git push -u origin your-name/short-topic
 - `git checkout -b ...`: สร้าง branch ใหม่และย้ายเข้าไปทำงานใน branch นั้น
 - `git add ...`: เลือกไฟล์ที่ต้องการใส่ใน commit
 - `git commit -m ...`: บันทึกงานพร้อมข้อความสั้นๆ
+- Commit บ่อย ๆ: แบ่งงานเป็นก้อนเล็ก ๆ เช่น แก้ parser, เพิ่ม dataset,
+  ปรับ README แยกกัน เพื่อให้ review และ rollback ง่าย
 - `git fetch origin`: เช็คว่าบน GitHub มี update ใหม่ไหม
 - `git merge origin/main`: เอา update ล่าสุดจาก `main` มารวมกับ branch ของเรา
 - `git push -u origin ...`: ส่ง branch ของเราขึ้น GitHub เพื่อเปิด PR
