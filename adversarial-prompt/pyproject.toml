@@ -1,9 +1,5 @@
 [project]
-name = "adversarial-prompt"
+name = "pair-runner"
 version = "0.1.0"
-description = "Local adversarial prompt dataset runners for authorized LLM safety research."
 requires-python = ">=3.10"
-dependencies = [
-    "openai>=1.30.0",
-    "requests>=2.31.0",
-]
+dependencies = ["ollama", "requests", "tqdm"]
