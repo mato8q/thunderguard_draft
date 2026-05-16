@@ -1,0 +1,6 @@
+dataset,total,tp,tn,fp,fn,acc,precision,recall,f1,fpr,time_s,s_per_sample
+autodan,820,820,0,0,0,1.0,1.0,1.0,1.0,0,8.8,0.01
+drattack,820,776,0,0,44,0.9463,1.0,0.9463,0.9724,0,8.1,0.01
+xstest,220,0,220,0,0,1.0,0,0,0,0.0,1.2,0.01
+jailbreakbench,70,0,68,2,0,0.9714,0.0,0,0,0.0286,0.3,0.0
+wildjailbreak,170,0,170,0,0,1.0,0,0,0,0.0,0.9,0.01

@@ -1,38 +1,43 @@
-# Large datasets
-datasets/
-
-# Python cache
+# Python bytecode and test caches
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Memory banks (binary, auto-generated)
+# Virtual environments and local tooling
+.venv/
+venv/
+env/
+ENV/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Model, cache, and generated runtime artifacts
 *.npz
 *.npy
-
-# Model checkpoints
 *.pt
 *.pth
 *.bin
 *.safetensors
-
-# Vector stores (auto-generated)
+data/memory*.npz
+IMAG/data/*memory*.npz
+IMAG/data/critical_layer*.txt
 jailbreak_store/
 jailbreak_store_ollama/
 
-# Environments
-.env
-venv/
-.venv/
+# Generated evaluation outputs
+*.log
 
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-thunderguard/Lib/site-packages/*
-thunderguard/Scripts/*.exe
