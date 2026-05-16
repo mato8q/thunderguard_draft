@@ -1,5 +1,0 @@
-dataset,total,tp,tn,fp,fn,acc,precision,recall,f1,fpr,time_s,s_per_sample
-autodan,820,0,0,0,820,0.0,0,0.0,0,0,9.4,0.01
-drattack,820,0,0,0,820,0.0,0,0.0,0,0,8.6,0.01
-base64,820,0,0,0,820,0.0,0,0.0,0,0,7.7,0.01
-zulu,820,0,0,0,820,0.0,0,0.0,0,0,8.8,0.01
