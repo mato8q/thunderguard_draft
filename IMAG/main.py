@@ -12,7 +12,6 @@ Pipeline (paper §3.2 + Algorithm 1):
 
 Usage:
   python main.py
-  meaw meaw meaaw meawww meawww meawww meawww meawww meawww meawww meawww meaw meaw
 """
 
 import os
