@@ -70,7 +70,15 @@ def load_benign_texts(dataset: str, rng: random.Random) -> list[str]:
     texts = []
 
     if dataset == "xstest":
-        texts.extend(_load_benign_csv(XSTEST_PATH, "XSTest"))
+        rows = _load_benign_csv(XSTEST_PATH, "XSTest")
+        # Paper Table 1: XSTest uses 200 benign prompts for FPR evaluation
+        # (CSV contains 250 rows; cap to match paper §4.2)
+        if len(rows) > 200:
+            rng.shuffle(rows)
+            rows = rows[:200]
+            print(f"  Sampled 200 from XSTest (paper §4.2)")
+        # texts.extend(_load_benign_csv(XSTEST_PATH, "XSTest"))
+        texts.extend(rows)
 
     elif dataset == "jailbreakbench":
         texts.extend(_load_benign_csv(JAILBREAKBENCH_PATH, "JailbreakBench"))
