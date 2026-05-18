@@ -34,11 +34,11 @@ git pull
 git checkout -b your-name/short-topic
 
 # แก้ไฟล์ แล้วบันทึกเป็น commit
-git add path/to/file.py
+git add .
 git commit -m "area: short description"
 
 # ทำซ้ำเป็นระยะ อย่ารอจนงานก้อนใหญ่จบค่อย commit
-git add another/file.py
+git add .
 git commit -m "area: next small change"
 
 # ดึง main ล่าสุดมารวมก่อนเปิด PR

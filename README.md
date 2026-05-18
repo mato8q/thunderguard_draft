@@ -2,7 +2,7 @@
 
 ThunderGuard is a LLM safety research project inspired by the IMAG framework,
 with team contributions in forgetting mechanisms, embedding-based detection,
-and latency reduction. test.
+and latency reduction. 
 
 This workspace includes:
 
