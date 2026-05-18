@@ -143,6 +143,22 @@ def _load_autodan_texts(fname: str = "autodan_transformed_820.csv") -> list[str]
     return texts
 
 
+def _load_drattack_texts(model_name: str = "") -> list[str]:
+    """Resolve DrAttack CSV per-model (drattack_results_<model-short>.csv → fallback
+    drattack_results_mistral.csv) and load the `best_adversarial_prompt` column."""
+    model_short = model_name.split("/")[-1].lower().replace("_", "-") if model_name else ""
+    candidate = f"drattack_results_{model_short}.csv" if model_short else ""
+    candidate_path = os.path.join(TRANSFORMED_DIR, candidate) if candidate else ""
+    if candidate_path and os.path.exists(candidate_path):
+        fname = candidate
+        print(f"  Using model-specific DrAttack file: {fname}")
+    else:
+        fname = "drattack_results_mistral.csv"
+        if model_short and "mistral" not in model_short:
+            print(f"  [WARN] No DrAttack file for '{model_short}' — falling back to mistral version")
+    return _load_transformed_csv(fname, "best_adversarial_prompt")
+
+
 def load_attack_texts(dataset: str, rng: random.Random, model_name: str = "") -> list[str]:
     """
     dataset: "hex_phi" | "advbench" | "zulu" | "base64" | "drattack" | "autodan"
@@ -166,17 +182,7 @@ def load_attack_texts(dataset: str, rng: random.Random, model_name: str = "") ->
         texts.extend(_load_transformed_csv("base64_prompts.csv", "prompt"))
 
     elif dataset == "drattack":
-        model_short = model_name.split("/")[-1].lower().replace("_", "-") if model_name else ""
-        candidate = f"drattack_results_{model_short}.csv" if model_short else ""
-        candidate_path = os.path.join(TRANSFORMED_DIR, candidate) if candidate else ""
-        if candidate_path and os.path.exists(candidate_path):
-            fname = candidate
-            print(f"  Using model-specific DrAttack file: {fname}")
-        else:
-            fname = "drattack_results_mistral.csv"
-            if model_short and "mistral" not in model_short:
-                print(f"  [WARN] No DrAttack file for '{model_short}' — falling back to mistral version")
-        texts.extend(_load_transformed_csv(fname, "best_adversarial_prompt"))
+        texts.extend(_load_drattack_texts(model_name))
 
     if not texts:
         raise FileNotFoundError(f"No attack samples found for dataset='{dataset}'.")
@@ -212,7 +218,11 @@ def get_critical_layer(llm: TargetLLM, model_name: str) -> int:
 # ── Seed encoding (run once, shared across all T values) ──────────────────────
 
 def build_seed_vectors(
-    llm: TargetLLM, critical_layer: int, n_seeds: int = 30, seed_strategy: str = "advbench"
+    llm: TargetLLM,
+    critical_layer: int,
+    n_seeds: int = 30,
+    seed_strategy: str = "advbench",
+    model_name: str = "",
 ) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """
     Encode attack seeds for the memory bank.
@@ -224,6 +234,12 @@ def build_seed_vectors(
                       evasion mix; better when eval attacks are obfuscated/DAN-style
                       generated against a DIFFERENT model)
       "mixed"       — AdvBench + handcrafted combined (~60 seeds total)
+      "autodan" | "drattack" | "zulu" | "base64"
+                    — cross-attack: seed the memory bank from one attack dataset
+                      to test generalization onto a different attack dataset
+                      (see results/seed_overlap_report.md). Reuses the same CSV
+                      loaders as --dataset, so text preprocessing (e.g. AutoDAN
+                      [REPLACE] substitution) stays identical.
 
     NOTE: AdvBench seeds give 0% detection when the eval attack CSVs were generated
     for a different model (e.g. Mistral-generated attacks evaluated on LLaMA2).
@@ -243,7 +259,22 @@ def build_seed_vectors(
     # Paper §5.2: seeds drawn from AdvBench + HexPHI combined
     paper_seeds = list(dict.fromkeys(texts_advbench + texts_hexphi))  # dedup, preserve order
 
-    if seed_strategy == "handcrafted" or not paper_seeds:
+    cross_attack_loaders = {
+        "autodan":  lambda: _load_autodan_texts(),
+        "zulu":     lambda: _load_transformed_csv("zulu_prompts.csv", "prompt"),
+        "base64":   lambda: _load_transformed_csv("base64_prompts.csv", "prompt"),
+        "drattack": lambda: _load_drattack_texts(model_name),
+    }
+
+    if seed_strategy in cross_attack_loaders:
+        loaded = cross_attack_loaders[seed_strategy]()
+        attack_texts = loaded[:n_seeds]
+        src_label = f"{seed_strategy} cross-attack"
+        if not attack_texts:
+            raise FileNotFoundError(
+                f"No prompts loaded for --seeds {seed_strategy} (CSV missing or empty)."
+            )
+    elif seed_strategy == "handcrafted" or not paper_seeds:
         attack_texts = SEED_ATTACKS[:n_seeds]
         src_label = "handcrafted"
         if not paper_seeds and seed_strategy != "handcrafted":
@@ -597,7 +628,7 @@ def main():
     )
     parser.add_argument(
         "--seeds",
-        choices=["advbench", "handcrafted", "mixed"],
+        choices=["advbench", "handcrafted", "mixed", "autodan", "drattack", "zulu", "base64"],
         default="advbench",
         help=(
             "Seed strategy for the attack memory bank. "
@@ -605,7 +636,10 @@ def main():
             "generated against THIS model from AdvBench. "
             "'handcrafted': 30 diverse DAN/roleplay/evasion seeds from seed_prompts.py — "
             "better when eval attacks are obfuscated or generated against a DIFFERENT model. "
-            "'mixed': combine both (~60 seeds)."
+            "'mixed': combine both (~60 seeds). "
+            "'autodan' | 'drattack' | 'zulu' | 'base64': cross-attack seeds — use the first "
+            "30 prompts from one attack dataset to detect a different attack dataset "
+            "(generalization test; see results/seed_overlap_report.md)."
         ),
     )
     parser.add_argument(
@@ -669,7 +703,9 @@ def main():
 
     # ── Phase A: encode everything once (GPU — expensive) ─────────────────────
     print("\n[3] Encoding seed prompts...")
-    seed_atk, seed_ben = build_seed_vectors(llm, critical_layer, seed_strategy=args.seeds)
+    seed_atk, seed_ben = build_seed_vectors(
+        llm, critical_layer, seed_strategy=args.seeds, model_name=model_name
+    )
 
     print(f"\n[4] Pre-encoding {len(datasets)} dataset(s) (GPU — done once for all T)...")
     print(f"     First {N_DATASET_SEEDS} samples per dataset → memory seeds; rest → evaluation.")
