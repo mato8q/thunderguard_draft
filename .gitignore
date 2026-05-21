@@ -48,3 +48,6 @@ node_modules/
 package-lock.json
 package.json
 
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
