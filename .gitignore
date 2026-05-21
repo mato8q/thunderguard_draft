@@ -40,4 +40,11 @@ jailbreak_store_ollama/
 
 # Generated evaluation outputs
 *.log
+results/
+IMAG/results/
+
+# Node / npm (not part of this project)
+node_modules/
+package-lock.json
+package.json
 
