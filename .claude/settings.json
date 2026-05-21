@@ -15,7 +15,19 @@
       "PowerShell($machinePath = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\); $machinePath -split \";\" | Where-Object { $_ -match \"node|npm\" })",
       "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"User\"\\); npm root -g; npm bin -g 2>&1)",
       "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"User\"\\); npm config get prefix)",
-      "Read(//c/Users/ICMNLab/AppData/Roaming/npm/**)"
+      "Read(//c/Users/ICMNLab/AppData/Roaming/npm/**)",
+      "Bash(.venv\\\\Scripts\\\\python.exe -m pip list --format=columns)",
+      "PowerShell(& \"c:\\\\Users\\\\ICMNLab\\\\Desktop\\\\thunderguard_draft\\\\.venv\\\\Scripts\\\\python.exe\" -m pip list --format=columns 2>&1)",
+      "Bash(conda env *)",
+      "PowerShell(conda env list 2>&1)",
+      "PowerShell(python --version 2>&1)",
+      "PowerShell(pip list --format=columns 2>&1)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\ICMNLab\" -Directory -Depth 2 | Where-Object { $_.Name -in @\\(\".venv\",\"venv\",\"env\",\"thunderguard\"\\) } | Select-Object FullName 2>&1)",
+      "PowerShell(pip --version 2>&1)",
+      "Read(//c/Users/ICMNLab/**)",
+      "PowerShell(cmd /c \"dir C:\\\\Program Files\\\\Python311\\\\Lib\\\\site-packages /A /B 2>&1\")",
+      "PowerShell(python -c \"import sys; print\\(sys.prefix\\); import site; print\\(site.getsitepackages\\(\\)\\)\")",
+      "PowerShell(cmd /c \"dir \"\"C:\\\\Program Files\\\\Python311\\\\Lib\\\\site-packages\"\" /A /B\" 2>&1)"
     ]
   }
 }

@@ -158,6 +158,7 @@ class TargetLLM:
             output_ids = self.model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
+                max_length=None,
                 do_sample=False,
                 pad_token_id=self.tokenizer.eos_token_id,
             )

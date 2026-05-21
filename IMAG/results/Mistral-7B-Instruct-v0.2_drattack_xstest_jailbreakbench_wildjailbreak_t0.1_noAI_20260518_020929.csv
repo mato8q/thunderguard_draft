@@ -1,5 +1,0 @@
-dataset,total,tp,tn,fp,fn,acc,precision,recall,f1,fpr,time_s,s_per_sample
-drattack,820,252,0,0,568,0.3073,1.0,0.3073,0.4701,0,3.5,0.0
-xstest,170,0,170,0,0,1.0,0,0,0,0.0,0.7,0.0
-jailbreakbench,70,0,70,0,0,1.0,0,0,0,0.0,0.2,0.0
-wildjailbreak,170,0,170,0,0,1.0,0,0,0,0.0,0.7,0.0

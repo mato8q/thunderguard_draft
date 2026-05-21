@@ -537,7 +537,8 @@ def _compute_metrics(results, dataset, total_time):
     }
 
 
-def save_results(rows: list[dict], model_name: str, datasets: list[str], threshold: float, no_ai: bool):
+def save_results(rows: list[dict], model_name: str, datasets: list[str], threshold: float, no_ai: bool,
+                 mem_cost: dict | None = None, seed_size: int | None = None):
     import csv
     from datetime import datetime
     os.makedirs("results", exist_ok=True)
@@ -547,8 +548,16 @@ def save_results(rows: list[dict], model_name: str, datasets: list[str], thresho
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     fname = f"results/{model_short}_{tag}_t{threshold}_{ai_tag}_{ts}.csv"
 
+    for row in rows:
+        if seed_size is not None:
+            row.setdefault("seed_size", seed_size)
+        if mem_cost is not None:
+            row.setdefault("memory_atk_mb", mem_cost["atk_mb"])
+            row.setdefault("memory_total_mb", mem_cost["total_mb"])
+
     fieldnames = ["dataset", "total", "tp", "tn", "fp", "fn",
-                  "acc", "precision", "recall", "f1", "fpr", "time_s", "s_per_sample"]
+                  "acc", "precision", "recall", "f1", "fpr", "time_s", "s_per_sample",
+                  "seed_size", "memory_atk_mb", "memory_total_mb"]
 
     with open(fname, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
@@ -569,7 +578,20 @@ def save_results(rows: list[dict], model_name: str, datasets: list[str], thresho
     return fname
 
 
+def _compute_memory_cost(n_atk: int, n_ben: int, hidden_dim: int) -> dict:
+    """Memory footprint of seed vectors stored in the memory bank (fp16, 2 bytes/element)."""
+    fp16_bytes = 2
+    atk_mb = n_atk * hidden_dim * fp16_bytes / (1024 ** 2)
+    ben_mb = n_ben * hidden_dim * fp16_bytes / (1024 ** 2)
+    return {
+        "n_atk": n_atk, "n_ben": n_ben, "hidden_dim": hidden_dim,
+        "atk_mb": round(atk_mb, 4), "ben_mb": round(ben_mb, 4),
+        "total_mb": round(atk_mb + ben_mb, 4),
+    }
+
+
 def main():
+    global N_DATASET_SEEDS
     parser = argparse.ArgumentParser(description="IMAG dataset evaluation")
     parser.add_argument(
         "--model",
@@ -648,7 +670,21 @@ def main():
         help="Print separation diagnostics (cos similarity between attack/benign SVD directions). "
              "Useful for debugging gap≈0 issues.",
     )
+    parser.add_argument(
+        "--seed-size",
+        type=int,
+        default=N_DATASET_SEEDS,
+        metavar="M",
+        help=(
+            f"Number of seed vectors per class stored in the memory bank (default: {N_DATASET_SEEDS}). "
+            "More seeds → better recall but higher RAM. "
+            "fp16 cost per class ≈ M × hidden_dim × 2 bytes "
+            "(e.g. M=30, d=4096 → 0.23 MB attack + benign each)."
+        ),
+    )
     args = parser.parse_args()
+
+    N_DATASET_SEEDS = args.seed_size
 
     # Resolve dataset list
     if "all" in args.dataset:
@@ -686,7 +722,7 @@ def main():
         print(f"  (auto-added benign datasets for FPR evaluation)")
     print(f"  Threshold(s): {thresholds}")
     print(f"  Pooling     : {POOLING}")
-    print(f"  Seeds       : {args.seeds}")
+    print(f"  Seeds       : {args.seeds}  (seed-size={args.seed_size})")
     print(f"  Active Immunity: {'OFF' if args.no_active_immunity else 'ON'}")
     print("=" * 65)
 
@@ -704,7 +740,7 @@ def main():
     # ── Phase A: encode everything once (GPU — expensive) ─────────────────────
     print("\n[3] Encoding seed prompts...")
     seed_atk, seed_ben = build_seed_vectors(
-        llm, critical_layer, seed_strategy=args.seeds, model_name=model_name
+        llm, critical_layer, n_seeds=args.seed_size, seed_strategy=args.seeds, model_name=model_name
     )
 
     print(f"\n[4] Pre-encoding {len(datasets)} dataset(s) (GPU — done once for all T)...")
@@ -730,6 +766,11 @@ def main():
               f"from {[d for d in BENIGN_DATASETS if d in encodings]}")
     else:
         print(f"\n  Benign reference: {len(seed_ben)} global handcrafted seeds (fallback)")
+
+    # Memory cost is constant across all T — compute once here
+    hidden_dim = llm.model.config.hidden_size
+    n_ben_used = len(actual_seed_ben) if actual_seed_ben else len(seed_ben)
+    mem_cost = _compute_memory_cost(len(seed_atk), n_ben_used, hidden_dim)
 
     # ── Phase B: classify at each threshold (CPU numpy — fast) ────────────────
     for threshold in thresholds:
@@ -786,10 +827,15 @@ def main():
             print(f"  {'Average':<14} {avg_acc:>6.3f} {avg_f1:>6.3f}")
 
         print(f"\n  Total wall time: {time.time()-t_total:.1f}s")
+        print(f"\n  Memory Bank  ({mem_cost['hidden_dim']}d, fp16):")
+        print(f"    Attack seeds : {mem_cost['n_atk']:>4} vecs = {mem_cost['atk_mb']:.4f} MB")
+        print(f"    Benign seeds : {mem_cost['n_ben']:>4} vecs = {mem_cost['ben_mb']:.4f} MB")
+        print(f"    Total        :            {mem_cost['total_mb']:.4f} MB")
         print("=" * 65)
 
         if all_results:
-            save_results(all_results, model_name, datasets, threshold, args.no_active_immunity)
+            save_results(all_results, model_name, datasets, threshold, args.no_active_immunity,
+                         mem_cost=mem_cost, seed_size=args.seed_size)
 
 
 if __name__ == "__main__":
